@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration
+	PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-config.dtd">
+
+<generatorConfiguration>
+	<classPathEntry location=".\WebContent\WEB-INF\lib\mysql-connector-java-5.1.17-bin.jar" />
+  	<context id="translate_tables" targetRuntime="MyBatis3">
+	    <jdbcConnection driverClass="com.mysql.jdbc.Driver" 
+	        connectionURL="jdbc:mysql://localhost:3306/translation"
+	        userId="root"
+	        password="password">
+	    </jdbcConnection>
+
+	    <javaTypeResolver >
+	      	<property name="forceBigDecimals" value="false" />
+	    </javaTypeResolver>
+	
+	    <javaModelGenerator targetPackage="com.java.restservices.model" targetProject=".\src">
+	      	<property name="enableSubPackages" value="false" />
+	      	<property name="trimStrings" value="true" />
+	    </javaModelGenerator>
+	
+	    <sqlMapGenerator targetPackage="com.java.restservices.mapper"  targetProject=".\resource">
+	    	<property name="enableSubPackages" value="false" />
+	    </sqlMapGenerator>
+	
+	    <javaClientGenerator type="XMLMAPPER" targetPackage="com.java.restservices.mapper"  targetProject=".\src">
+	      <property name="enableSubPackages" value="false" />
+		</javaClientGenerator>
+  	</context>
+</generatorConfiguration>

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.java.restservices.mapper.UserMapper">
+
+	<select id="getUserById" parameterType="int" resultType="com.java.restservices.model.User">
+		SELECT
+			id as idUser,
+			id_language as idLanguage,
+			gcm_Token as gcmToken,
+			email as email,
+			username as username,
+			password as password,
+			telephone as telephone,
+			date_registration as dateRegistration
+		FROM USER
+		WHERE id = #{idUser}
+	</select>
+
+	<resultMap type="User" id="UserResultSet">
+		<id property="idUser" column="id" />
+		<result property="idLanguage" column="id_language" />
+		<result property="gcmToken" column="gcm_token" />
+		<result property="email" column="email" />
+		<result property="username" column="username" />
+		<result property="password" column="password" />
+		<result property="telephone" column="telephone" />
+		<result property="dateRegistration" column="date_registration" />
+	</resultMap>
+
+	<select id="getAllUsers" resultMap="UserResultSet">
+		SELECT * FROM USER
+	</select>
+
+	<insert id="insertUser" parameterType="User" useGeneratedKeys="true" keyProperty="idUser">
+		INSERT INTO USER(id_language, gcm_token, email, username, password, telephone, date_registration)
+		VALUES(#{idLanguage}, #{gcmToken}, #{email}, #{username}, #{password}, #{telephone}, #{dateRegistration})
+	</insert>
+
+	<update id="updateUser" parameterType="User">
+		UPDATE USER
+		SET
+		PASSWORD=#{password}
+		WHERE
+		ID = #{idUser}
+	</update>
+
+	<delete id="deleteUser" parameterType="int">
+		DELETE FROM USER WHERE
+		ID = #{idUser}
+	</delete>
+
+	<select id="checkLogin" parameterType="User" resultMap="UserResultSet">
+		SELECT * FROM USER
+		WHERE username = #{username} AND PASSWORD = #{password}
+	</select>
+</mapper>
