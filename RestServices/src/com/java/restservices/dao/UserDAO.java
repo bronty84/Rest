@@ -3,9 +3,9 @@
  */
 package com.java.restservices.dao;
 
-import java.sql.SQLException;
 import java.util.List;
 
+import org.apache.ibatis.exceptions.PersistenceException;
 import org.apache.ibatis.session.SqlSession;
 
 import com.java.restservices.connection.MyBatisDAOUtil;
@@ -18,13 +18,15 @@ import com.java.restservices.model.User;
  */
 public class UserDAO {
 
-	public void insertUser(User user) throws SQLException {
+	public void insertUser(User user) throws Exception {
 		SqlSession sqlSession = MyBatisDAOUtil.getSqlSessionFactory().openSession();
 		try {
 			UserMapper userMapper = sqlSession.getMapper(UserMapper.class);
 			userMapper.insertUser(user);
 			sqlSession.commit();
-		} catch (SQLException e){
+		} catch (PersistenceException e){
+			throw e;
+		} catch (Exception e) {
 			throw e;
 		} finally {
 			sqlSession.close();

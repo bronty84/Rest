@@ -3,15 +3,16 @@
  */
 package com.java.restservices.service;
 
-import javax.ws.rs.GET;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.FormParam;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
 import com.java.restservices.dao.UserDAO;
 import com.java.restservices.model.User;
-import com.java.restservices.utility.Utitlity;
+import com.java.restservices.utility.Utility;
 
 /**
  * @author an.delia
@@ -21,19 +22,17 @@ import com.java.restservices.utility.Utitlity;
 @Path("/login")
 public class Login {
 
-	// HTTP Get Method
-	@GET 
-	// Path: http://localhost/<appln-folder-name>/login/dologin
-	@Path("/dologin")
-	// Produces JSON as response
-	@Produces(MediaType.APPLICATION_JSON) 
+	@POST
+	@Path("dologin")
+	@Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
 	// Query parameters are parameters: http://localhost/<appln-folder-name>/login/dologin?username=abc&password=xyz
-	public String doLogin(@QueryParam("username") String uname, @QueryParam("password") String pwd){
+	public String doLogin(@FormParam("username") String uname, @FormParam("password") String pwd){
 		String response = "";
 		if(checkCredentials(uname, pwd)){
-			response = Utitlity.constructJSON("login",true);
+			response = Utility.constructJSON("login", true, 1);
 		}else{
-			response = Utitlity.constructJSON("login", false, "Incorrect Username or Password");
+			response = Utility.constructJSON("login", false, 2, "Incorrect Username or Password");
 		}
 		return response;		
 	}
@@ -48,11 +47,11 @@ public class Login {
 	private boolean checkCredentials(String uname, String pwd){
 		System.out.println("Inside checkCredentials");
 		boolean result = false;
-		if(Utitlity.isNotNull(uname) && Utitlity.isNotNull(pwd)){
+		if(Utility.isNotNull(uname) && Utility.isNotNull(pwd)){
 			try {
 				User user = new User();
 				user.setUsername(uname);
-				user.setPassword(pwd);
+				user.setPassword(Utility.encryptPassword(pwd));
 				User login = new UserDAO().checkLogin(user);
 				result = login!=null ? true : false;
 				System.out.println("Inside checkCredentials try "+result);

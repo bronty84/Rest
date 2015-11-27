@@ -3,27 +3,20 @@
  */
 package com.java.restservices.service;
 
-import java.sql.Date;
-import java.sql.SQLException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.FormParam;
-import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
 import org.apache.ibatis.exceptions.PersistenceException;
 
 import com.java.restservices.dao.UserDAO;
 import com.java.restservices.model.User;
-import com.java.restservices.utility.Utitlity;
-import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException;
+import com.java.restservices.utility.Utility;
 
 /**
  * @author an.delia
@@ -34,20 +27,16 @@ import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationExceptio
 @Path("/register")
 public class Register {
 
-	// HTTP Get Method
 	@POST 
-	// Path: http://localhost/RestServices/register/doregister
-	@Path("/doregister")  
-	// Produces JSON as response
-	@Produces(MediaType.APPLICATION_JSON)
-	// Query parameters are parameters: http://localhost/RestServices/register/doregister?name=pqrs&username=abc&password=xyz
-	//public String doLogin(@QueryParam("name") String name, @QueryParam("username") String uname, @QueryParam("password") String pwd){
-	public String doLogin(@QueryParam("idLanguage") Long idLanguage, 
-						  @QueryParam("gmcToken") String gmcToken, 
-						  @QueryParam("email") String email,
-						  @QueryParam("username") String username,
-						  @QueryParam("password") String password,
-						  @QueryParam("telephone") Long telephone){
+	@Path("doregister")  
+	@Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+	public String doRegister(@FormParam("idLanguage") Long idLanguage, 
+							@FormParam("gmcToken") String gmcToken, 
+							@FormParam("email") String email,
+							@FormParam("username") String username,
+							@FormParam("password") String password,
+							@FormParam("telephone") Long telephone){
 		String response = "";
 		try{
 			System.out.println("Inside doLogin "+username+"  "+password);
@@ -56,59 +45,56 @@ public class Register {
 			user.setGcmToken(gmcToken);
 			user.setEmail(email);
 			user.setUsername(username);
-			user.setPassword(password);
+			user.setPassword(Utility.encryptPassword(password));
 			user.setTelephone(new Long(telephone));
 			user.setDateRegistration(new java.sql.Date(Calendar.getInstance().getTimeInMillis()));
 			int retCode = registerUser(user);
 			if(retCode == 0){
-				response = Utitlity.constructJSON("register",true);
+				response = Utility.constructJSON("register", true,retCode);
 			}else if(retCode == 1){
-				response = Utitlity.constructJSON("register",false, "You are already registered");
+				response = Utility.constructJSON("register", false, retCode, "Username already registered");
 			}else if(retCode == 2){
-				response = Utitlity.constructJSON("register",false, "Special Characters are not allowed in Username and Password");
+				response = Utility.constructJSON("register", false, retCode, "Email already registered");
 			}else if(retCode == 3){
-				response = Utitlity.constructJSON("register",false, "Error occured");
+				response = Utility.constructJSON("register", false, retCode, "Telephone already registered");
+			}else if(retCode == 4){
+				response = Utility.constructJSON("register", false, retCode, "Special Characters are not allowed in Username and Password");
+			}else if(retCode == 5){
+				response = Utility.constructJSON("register", false, retCode, "Error occured");
 			}
 			return response;
 		} catch (Exception e){
 			System.out.println("Exception - dologin: "+e);
-			response = Utitlity.constructJSON("register",false, "Error occured", e.toString());
+			response = Utility.constructJSON("register",false, 6, "Error occured", e.toString());
 			return response;
 		}
 	}
 		
-//	public String uniqueRegister(){
-//		
-//	}
-	
-	private int registerUser(User user){
+	private int registerUser(User user) throws Exception{
 		System.out.println("Inside checkCredentials");
-		int result = 3;
-		if(Utitlity.isNotNull(user.getUsername()) && Utitlity.isNotNull(user.getPassword())){
+		int result = 5;
+		if(Utility.isNotNull(user.getUsername()) && Utility.isNotNull(user.getPassword())){
 			try {
 				UserDAO userDAO = new UserDAO();
 				userDAO.insertUser(user);
-				System.out.println("RegisterUser if");
 				result = 0;
-			} catch(SQLException sqle){
-				System.out.println("RegisterUser catch sqle");
-				//When Primary key violation occurs that means user is already registered
-				if(sqle.getErrorCode() == 1062){
+			} catch(PersistenceException pe){
+				System.out.println("RegisterUser catch PersistenceException: "+pe);
+				if(pe.getMessage().contains("username_UNIQUE"))
 					result = 1;
-				} 
-				//When special characters are used in name,username or password
-				else if(sqle.getErrorCode() == 1064){
-					System.out.println(sqle.getErrorCode());
+				else if((pe.getMessage().contains("email_UNIQUE")))
 					result = 2;
-				}
-			}
-			catch (Exception e) {
-				System.out.println("Inside checkCredentials catch e ");
+				else if((pe.getMessage().contains("telephone_UNIQUE")))
+					result = 3;
+				else 
+					throw pe;
+			} catch (Exception e) {
+				System.out.println("Inside checkCredentials catch Exception ");
 				throw e;
 			}
 		}else{
 			System.out.println("Inside checkCredentials else");
-			result = 3;
+			result = 5;
 		}
 		return result;	
 	}
